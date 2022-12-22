@@ -37,7 +37,19 @@ exports.list = async (params) => {
 
 exports.add = async (params) => {
   try {
-
+    if (params.image) {
+      const imageData = await uploadUserProfile(
+        params,
+        "image",
+        {
+          path: "profile-images",
+          name: params.authUser._id,
+          extension: "png",
+        },
+        [100, 256]
+      );
+      image = imageData.name;
+    }
 
     const addUser = new db.user({
       ...params

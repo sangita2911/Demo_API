@@ -8,7 +8,7 @@ exports.listProduct = async(req, res) => {
 }
 
 exports.addProduct = async(req, res) => {
-    let rules = { name: 'required', price: 'required', category: 'required' };
+    let rules = { name: 'required', price: 'required'};
     const validation = new Validator(req.body, rules);
     if (validation.fails()) {
         return res.send({ status: 400, message: getFirstError(validation.errors) });

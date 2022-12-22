@@ -47,36 +47,64 @@ exports.listProduct = async (params) => {
                 },
             },
             {
-            $lookup: {
-                from: "stocks",
-                localField: "_id",
-                foreignField: "product_id",
-                as: "stock",
-                pipeline: [
-                    { $match: { $expr: { $and: [{ $eq: ["$deleted_at", null] }] } } },
+                $lookup: {
+                  from: "product_tag_assigns",
+                  localField: "_id",
+                  foreignField: "product_id",
+                  as: "tag_list",
+                  pipeline: [
                     {
-                        $project: {
-                          type: 1,
-                            unit: 1,
-                            remaining_unit: 1,
-                        },
+                      $lookup: {
+                        from: "tags",
+                        localField: "product_tag_id",
+                        foreignField: "_id",
+                        as: "all_tag_details",
+                        pipeline: [
+                          {
+                            $match: {
+                              $expr: {
+                                $and: [
+                                
+                                  { $eq: ["$status", true] },
+                                ],
+                              },
+                            },
+                          },
+                          {
+                            $project: {
+                              title: 1
+                             
+                            },
+                          },
+                        ],
+                      },
                     },
-                ],
-            },
-        },
+                    {
+                      $project: {
+                        ordering: 1,
+                        product_tag_id: 1,
+                        all_tag_details: {
+                          $arrayElemAt: ["$all_tag_details", 0],
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
             {
                 $project: {
                     _id: 1,
                     name: 1,
                     price: 1,
                     tags: 1,
+                    created_at: 1,
+                    updated_at:1,
                     image: {
                         $cond: {
                             if: "$image",
                             then: {
                                 $concat: [
                                     process.env.BASE_URL,
-                                    "uploads/product-images/",
                                     "$image",
                                 ],
                             },
@@ -88,8 +116,8 @@ exports.listProduct = async (params) => {
                             },
                         },
                     },
-                    category: "$category",
-                    stock: "$stock"
+                     category: "$category",
+                    tag_list: "$tag_list.all_tag_details"
                 },
             }
         ]);
@@ -140,6 +168,18 @@ exports.addProduct = async (params) => {
             
         }
 
+        if (params.tags && Array.isArray(params.tags) && params.tags.length > 0) {
+            const productTagAssign = [];
+            params.tags.forEach((tag_id, i) => {
+              productTagAssign.push({
+                product_id: ObjectId(saveProduct._id),
+                product_tag_id: ObjectId(tag_id),
+                ordering: i + 1,
+              });
+            });
+          
+            await db.tagAssign.insertMany(productTagAssign);
+        }
         return {
             status: 200,
             message: "Product successfully saved.",
@@ -198,13 +238,13 @@ exports.details = async (params) => {
                     name: 1,
                     price: 1,
                     created_at: 1,
+                    updated_at:1,
                     image: {
                         $cond: {
                             if: "$image",
                             then: {
                                 $concat: [
                                     process.env.BASE_URL,
-                                    "uploads/product-images/",
                                     "$image",
                                 ],
                             },
