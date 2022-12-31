@@ -17,6 +17,7 @@ jobs:
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
         server-dir: public_html
+    - name: 💻 Restart  node
       uses: appleboy/ssh-action@master
       with: 
         host: sangita.iosx.in
