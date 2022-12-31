@@ -1,5 +1,5 @@
 
-# Ceo REST API
+# Demo REST API
 
-this api use only ceo site
+this api use only demo site
 
