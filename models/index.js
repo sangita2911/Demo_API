@@ -4,5 +4,6 @@ module.exports = {
   product: require("./productModel"),
   tag: require("./tagModel"),
   stock: require("./stockModel"),
-  tagAssign: require("./tagAssignModel")
+  tagAssign: require("./tagAssignModel"),
+   product_assign_category: require("./categoryAssignModel")
 };

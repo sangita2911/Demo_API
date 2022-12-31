@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const categoryAssignSchema = new mongoose.Schema(
+const productAssignCategorySchema = new mongoose.Schema(
   {
     product_id: { type: mongoose.Schema.Types.ObjectId, ref: "products", default: null },
     product_category_id: { type: mongoose.Schema.Types.ObjectId, ref: "categories", default: null },
@@ -9,4 +9,4 @@ const categoryAssignSchema = new mongoose.Schema(
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );
 
-module.exports = mongoose.model( "product_assign_categories", categoryAssignSchema);
+module.exports = mongoose.model( "product_assign_categories", productAssignCategorySchema);

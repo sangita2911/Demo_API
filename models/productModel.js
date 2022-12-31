@@ -5,12 +5,6 @@ const productSchema = new mongoose.Schema(
     name: { type: String, default: null },
     price: { type: Number, default: null },
     image: { type: String, default: null },
-    category: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "categories",
-      default: null,
-    },
-    tags: { type: Array, default: null },
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "users",

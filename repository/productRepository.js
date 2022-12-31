@@ -2,7 +2,7 @@ const db = require("../models");
 
 const { keywordSearch } = require("../helpers/search");
 const { ObjectId } = require("mongoose").Types;
-const { uploadSingle } = require("../helpers/upload");
+const { uploadSingle,deleteFile  } = require("../helpers/upload");
 
 exports.listProduct = async (params) => {
     try {
@@ -11,41 +11,65 @@ exports.listProduct = async (params) => {
             {
                 $match: finalParams,
             },
+             {
+        $lookup: {
+          from: "product_assign_categories",
+          localField: "_id",
+          foreignField: "product_id",
+          as: "category_list",
+          pipeline: [
             {
-                $lookup: {
-                    from: "categories",
-                    localField: "category",
-                    foreignField: "_id",
-                    as: "category",
-                    pipeline: [
-                        { $match: { $expr: { $and: [{ $eq: ["$deleted_at", null] }] } } },
-                        {
-                            $project: {
-                                name: 1,
-                                category_type: 1,
-
-                                image: {
-                                    $cond: {
-                                        if: "$image",
-                                        then: {
-                                            $concat: [
-                                                process.env.BASE_URL,
-                                                "$image",
-                                            ],
-                                        },
-                                        else: {
-                                            $concat: [
-                                                process.env.FRONT_URL,
-                                                "uploads/product-images/no-img.png",
-                                            ],
-                                        },
-                                    },
-                                },
-                            },
+              $lookup: {
+                from: "categories",
+                localField: "product_category_id",
+                foreignField: "_id",
+                as: "all_category_details",
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ["$deleted_at", null] },
+                          { $eq: ["$status", true] },
+                        ],
+                      },
+                    },
+                  },
+                  {
+                    $project: {
+                      title: 1,
+                      slug: 1,
+                      icon: 1,
+                      description: 1,
+                      image: {
+                        $cond: {
+                          if: "$image",
+                          then: { $concat: [process.env.BASE_URL, "$image"] },
+                          else: {
+                            $concat: [
+                              process.env.BASE_URL,
+                              "uploads/default-100px.jpg",
+                            ],
+                          },
                         },
-                    ],
-                },
+                      },
+                    },
+                  },
+                ],
+              },
             },
+            {
+              $project: {
+                ordering: 1,
+                product_category_id: 1,
+                all_category_details: {
+                  $arrayElemAt: ["$all_category_details", 0],
+                },
+              },
+            },
+          ],
+        },
+      },
             {
                 $lookup: {
                   from: "product_tag_assigns",
@@ -96,7 +120,7 @@ exports.listProduct = async (params) => {
                     _id: 1,
                     name: 1,
                     price: 1,
-                    tags: 1,
+                    
                     created_at: 1,
                     updated_at:1,
                     image: {
@@ -116,7 +140,7 @@ exports.listProduct = async (params) => {
                             },
                         },
                     },
-                     category: "$category",
+                      category_list: "$category_list.all_category_details",
                     tag_list: "$tag_list.all_tag_details"
                 },
             }
@@ -158,15 +182,22 @@ exports.addProduct = async (params) => {
 
 
         const saveProduct = await addProduct.save();
-        if (params.sku) {
-           
-            const stk = await new db.stock({
-                product_id: saveProduct._id,
-                unit: params.sku,
-                remaining_unit: params.sku
-            }).save();
-            
-        }
+        if (
+      params.category_ids &&
+      Array.isArray(params.category_ids) &&
+      params.category_ids.length > 0
+    ) {
+      const productCategoryAssign = [];
+      params.category_ids.forEach((cat_id, i) => {
+        productCategoryAssign.push({
+          product_id: ObjectId(saveProduct._id),
+          product_category_id: ObjectId(cat_id),
+          ordering: i + 1,
+        });
+      });
+
+      await db.product_assign_category.insertMany(productCategoryAssign);
+    }
 
         if (params.tags && Array.isArray(params.tags) && params.tags.length > 0) {
             const productTagAssign = [];
@@ -201,7 +232,13 @@ exports.editProduct = async (params) => {
             return { status: 400, message: "This is not a valid product." };
 
 
-
+       if (params.image) {
+      const imageData = await uploadSingle(params, "image", {
+        path: "product-images",
+      });
+      params.image = imageData.path;
+      deleteFile(checkProduct.image);
+    }
 
 
         const updatedproduct = await db.product
@@ -213,6 +250,27 @@ exports.editProduct = async (params) => {
                 { new: true }
             )
             .lean();
+            
+            
+              if (
+      params.category_ids &&
+      Array.isArray(params.category_ids) &&
+      params.category_ids.length > 0
+    ) {
+      const productCategoryAssign = [];
+      params.category_ids.forEach((cat_id, i) => {
+        productCategoryAssign.push({
+          product_id: ObjectId(params.id),
+          product_category_id: ObjectId(cat_id),
+          ordering: i + 1,
+        });
+      });
+
+      await db.product_assign_category.deleteMany({
+        product_id: ObjectId(params.id),
+      });
+      await db.product_assign_category.insertMany(productCategoryAssign);
+    }
 
         return {
             status: 200,
