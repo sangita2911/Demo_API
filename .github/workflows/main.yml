@@ -1,0 +1,29 @@
+on:
+ push:
+  branches: [ main ]
+name: 🚀 Deploy Sangita api on push
+jobs:
+  web-deploy:
+    name: 🎉 Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: 🚚 Get latest code
+      uses: actions/checkout@v2
+    
+    - name: 📂 Sync Sangita files
+      uses: SamKirkland/FTP-Deploy-Action@4.3.0
+      with:
+        server: sangita.iosx.in
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        server-dir: public_html
+      uses: appleboy/ssh-action@master
+      with: 
+        host: sangita.iosx.in
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        port: 22
+        script: |
+          cd public_html
+          pm2 stop server.js
+          pm2 start server.js
