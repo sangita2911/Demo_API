@@ -16,7 +16,7 @@ jobs:
         server: sangita.iosx.in
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        server-dir: public_html/
+        server-dir: /home/sangitaiosx/public_html
     - name: 💻 Restart  node
       uses: appleboy/ssh-action@master
       with: 
@@ -25,6 +25,6 @@ jobs:
         password: ${{ secrets.FTP_PASSWORD }}
         port: 22
         script: |
-          cd public_html/
+          cd /home/sangitaiosx/public_html
           pm2 stop server.js
           pm2 start server.js
