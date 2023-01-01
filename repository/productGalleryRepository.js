@@ -6,13 +6,8 @@ const { uploadSingle, deleteFile } = require("../helpers/upload");
 
 exports.addgallery = async (params) => {
   try {
-    if (params.images) {
-      const imageData = await uploadSingle(params, "image", {
-        path: "product-gallery",
-      });
-      params.image = imageData.path;
-    }
-
+    
+let saveGallery =[];
     if (
       params.images &&
       Array.isArray(params.images) &&
@@ -20,7 +15,7 @@ exports.addgallery = async (params) => {
     ) {
       const productGalleries = [];
       params.images.forEach(async (item, i) => {
-        const imageData = await uploadSingle(item, "image", {
+        const imageData = await uploadMulti(item, "image", {
           path: "product-gallery",
         });
         productGalleries.push({
@@ -33,10 +28,10 @@ exports.addgallery = async (params) => {
       await db.productgalleries.deleteMany({
         product_id: ObjectId(params.id),
       });
-      await db.productgalleries.insertMany(productGalleries);
+      saveGallery = await db.productgalleries.insertMany(productGalleries);
     }
 
-    const saveGallery = await addGallery.save();
+    
 
     return {
       status: 200,

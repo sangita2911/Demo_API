@@ -8,6 +8,8 @@ const categoryController = require("../controllers/categoryController");
 const productController = require("../controllers/productController");
 const tagController = require("../controllers/tagController");
 const authController = require("../controllers/authController");
+const productGalleryController = require("../controllers/productGalleryController");
+
 router.post("/user/sign-up", authController.signup);
 router.post("/user/login", authController.login);
 router.post("/user-search", userController.list);
@@ -30,6 +32,7 @@ router.post("/tag/add", tagController.addTag);
 router.post("/tag/edit", tagController.editTag);
 router.post("/tag/delete", tagController.deleteTag);
 router.post("/tag/details", tagController.details);
+router.post("/product/addGallery", productGalleryController.addgallery);
 
 
 
